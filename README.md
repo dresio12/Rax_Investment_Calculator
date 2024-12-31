@@ -4,8 +4,8 @@ A small project building a shiny application that performs a number of calculati
 
 This app calculates how much rax needs to be invested into Player and Team passes to reach each rarity level in an attempt to identify which pass rarities provide the best value for your investment. The calculator is an estimation, as I do not have the average sum of play rating card values for each type of pack, but the user can test different values. They can also input the initial Player and Team card rax costs, choose the type of pack, and choose the target rarity to see how many packs must be bought and for how much rax. 
 
-Also included is a table that shows the net profit a user can expect from On This Day (OTD) rax -  a feature that allows a user to continue collecting rax from player performances on the same date in the years following that performance, up to a maximum cap. 
+Also included is a table that shows the net profit a user can expect from On This Day (OTD) rax -  a feature that allows a user to continue collecting rax from player performances on the same date in the years following that performance, up to a maximum cap. Considering most players, and some teams, do not reach the rax cap during the season, the table provides a good estimation of how valuable it is to invest in each rarity for the majority of players and teams on the Real app.
 
-The link to the app itself is below!
+The link to the Shiny app itself is below!
 
 https://derekresio.shinyapps.io/Rax_Investment_Calculator/
