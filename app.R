@@ -1,11 +1,11 @@
 library(shiny)
 library(rsconnect)
 
-rsconnect::setAccountInfo(name='###',
-                          token='###',
-                          secret='###')
+rsconnect::setAccountInfo(name='derekresio',
+                          token='AD324C025BF0B0AFA396E018CD30B2D4',
+                          secret='8M9ujfv1U102rDfFjxNoLuOsszaIz8iCVK4UhhkJ')
 
-library(shiny)
+
 
 ui <- fluidPage(
   # Add custom CSS for the black background
@@ -18,47 +18,95 @@ ui <- fluidPage(
       .shiny-input-container {
         color: black;
       }
+      h2, h3 { margin-bottom: 20px; }
+    .shiny-input-container { margin-bottom: 20px; }
+    .shiny-text-output { margin-top: 15px; }
+    .well { padding: 20px; margin-bottom: 20px; }
+    .table { margin-top: 15px; padding: 5px; }
     "))
   ),
   
   titlePanel("Card Investment Calculator"),
   
-  sidebarLayout(
-    sidebarPanel(
-      # Card Type selection
-      selectInput("card_type", "Card Type:",
-                  choices = c("Player", "Team")),
-      
-      # Card Cost (dynamic based on Card Type)
-      numericInput("card_cost", "Initial Card Cost:", value = 200, min = 0),
-      
-      # Target Card Rarity selection
-      selectInput("card_rarity", "Target Card Rarity:",
-                  choices = c("Common", "Uncommon", "Rare", "Epic", 
-                              "Legendary", "Mystic", "Iconic")),
-      
-      # Average Play Rating
-      numericInput("avg_rating", "Average Play Rating:", value = 3.5, min = 0, step = 0.1),
-      
-      # Pack Type selection (simplified to General, Yesterday, or Starter)
-      selectInput("pack_type", "Pack Type:",
-                  choices = c("General", "Yesterday", "Starter"))
+  tags$p(
+    "Use this tool to estimate the minimum investment and maximum returns on 
+  your card upgrades.",  
+    style = "font-size: 15px; color: #cccccc; margin-bottom: 10px;"
+  ),
+  
+  tags$p(
+    "First, choose whether you're upgrading a Player or Team/UFC card. 
+  Then, enter the initial cost of the card you're upgrading and select a card 
+  rarity. Lastly, select the type of pack you're buying and enter the average 
+  play rating of the cards in the pack.",  
+    style = "font-size: 15px; color: #cccccc; margin-bottom: 10px;"
+  ),
+  
+  tags$p(
+    "The calculations assume you are able to trade all of your unwanted cards in 
+  a pack for cards of the pass you are upgrading. Using the Celtics as an 
+  example, it assumes you are able to trade all of the non-Celtics cards in a 
+  pack (it could be 1, 6, or anything in between) for Celtics cards of 
+  equal value. Setting an average rating value of 3.5 means buying 1 pack will
+  *eventually* get you 21 rating of Celtics cards for your pass. The same 
+  logic applies to player passes as well.",  
+    style = "font-size: 15px; color: #cccccc; margin-bottom: 20px;"
+    
+  ),
+  
+  tags$p(
+    "The estimations are not perfect because I can't tell you the average card 
+    ratings for each pack of each sport. For a conservative estimate, use 3.5 
+    for General, Starter, and Yesterday packs regardless of sport. For Game 
+    packs, use 5 for NBA and 5.5 for NHL. Game pack calculations are based on a 
+    cost of 800 per pack.",  
+    style = "font-size: 15px; color: #cccccc; margin-bottom: 40px;"
+    
+  ),
+  
+  fluidRow(
+    column(3,
+           wellPanel(
+             # Card Type selection
+             selectInput("card_type", "Card Type:",
+                         choices = c("Player", "Team")),
+             
+             # Card Cost (dynamic based on Card Type)
+             numericInput("card_cost", "Initial Card Cost:", value = 200, min = 0),
+             
+             # Target Card Rarity selection
+             selectInput("card_rarity", "Target Card Rarity:",
+                         choices = c("Common", "Uncommon", "Rare", "Epic", 
+                                     "Legendary", "Mystic", "Iconic")),
+             
+             # Average Play Rating
+             numericInput("avg_rating", "Average Play Rating:", value = 3.5, min = 0, step = 0.1),
+             
+             # Pack Type selection (simplified to General, Yesterday, or Starter)
+             selectInput("pack_type", "Pack Type:",
+                         choices = c("General", "Yesterday", "Starter", "Game"))
+           ),
+           
+           # Display outputs
+           h3("Investment Summary"),
+           div(style = "font-size: 20px;", textOutput("total_investment")),
+           div(style = "font-size: 20px;", textOutput("total_play_ratings")),
+           div(style = "font-size: 20px;", textOutput("total_play_rating_value")),
+           div(style = "font-size: 20px;", textOutput("total_rating_value_needed")),
+           div(style = "font-size: 20px;", textOutput("total_packs"))
+           
     ),
     
-    mainPanel(
-      # Display the Summary Table
-      h3(textOutput("table_title")),
-      tableOutput("summary_table"),
-      
-      # Display outputs
-      textOutput("total_investment"),
-      textOutput("total_play_ratings"),
-      textOutput("total_play_rating_value"),
-      textOutput("total_rating_value_needed"), # New output
-      textOutput("total_packs"),
-      
-      # Display card rarity image
-      imageOutput("card_image", width = "100%", height = "auto")
+    column(7,style = "margin-top: -23px; padding-left: 100px;",
+           # Display the Summary Table
+           div(style = "text-align: center; width: 100%;",
+               h3(textOutput("table_title"))
+           ),
+           tableOutput("summary_table"),
+           
+           # Display card rarity image
+           div(style = "text-align: center;",
+               imageOutput("card_image", width = "100%", height = "auto"))
     )
   )
 )
@@ -104,7 +152,8 @@ server <- function(input, output, session) {
   pack_details <- list(
     General = list(cards = 6, cost = 200),
     Yesterday = list(cards = 5, cost = 250),
-    Starter = list(cards = 3, cost = 100)
+    Starter = list(cards = 3, cost = 100),
+    Game = list(cards = 6, cost = 800)
   )
   
   # Reactive calculations
@@ -135,7 +184,7 @@ server <- function(input, output, session) {
       total_investment = total_investment,
       total_ratings = total_cards * packs_needed,
       total_play_rating_value = total_play_rating_value,
-      total_rating_value_needed = target_play_ratings, # New calculation
+      total_rating_value_needed = target_play_ratings, 
       total_packs = packs_needed
     )
   })
@@ -158,9 +207,9 @@ server <- function(input, output, session) {
   # Summary Table
   output$table_title <- renderText({
     if (input$card_type == "Player") {
-      return("Player OTD Rax Break-even")
+      return("Player OTD Rax Margins")
     } else {
-      return("Team OTD Rax Break-even")
+      return("Team OTD Rax Margins")
     }
   })
   
@@ -211,13 +260,13 @@ server <- function(input, output, session) {
     
     # Generate the HTML table with colored text
     table_html <- tags$table(
-      style = "width: 100%; text-align: left; border-collapse: collapse;",
+      style = "width: 100%; text-align: center; border-collapse: collapse;",
       tags$thead(
         tags$tr(
-          tags$th("Card Rarity", style = "border-bottom: 2px solid white; padding: 5px;"),
-          tags$th("Maximum OTD Rax", style = "border-bottom: 2px solid white; padding: 5px;"),
-          tags$th("Rax Investment", style = "border-bottom: 2px solid white; padding: 5px;"),
-          tags$th("Maximum OTD Profit", style = "border-bottom: 2px solid white; padding: 5px;")
+          tags$th("Card Rarity", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Maximum OTD Rax", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Rax Investment", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Maximum OTD Profit", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;")
         )
       ),
       tags$tbody(
@@ -228,15 +277,15 @@ server <- function(input, output, session) {
               style = paste("color:", rarity_colors[table_data$Card_Rarity[i]], "; padding: 5px;")
             ),
             tags$td(
-              formatC(table_data$Maximum_OTD_Rax[i], format = "f", big.mark = ",",  digits = 0),
+              formatC(table_data$Maximum_OTD_Rax[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
               style = "padding: 5px;"
             ),
             tags$td(
-              formatC(table_data$Rax_Investment[i], format = "f", big.mark = ",",  digits = 0),
+              formatC(table_data$Rax_Investment[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
               style = "padding: 5px;"
             ),
             tags$td(
-              formatC(table_data$Maximum_OTD_Profit[i], format = "f", big.mark = ",",  digits = 0),
+              formatC(table_data$Maximum_OTD_Profit[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
               style = "padding: 5px;"
             )
           )
