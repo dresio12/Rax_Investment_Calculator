@@ -1,9 +1,9 @@
 library(shiny)
 library(rsconnect)
 
-rsconnect::setAccountInfo(name='derekresio',
-                          token='AD324C025BF0B0AFA396E018CD30B2D4',
-                          secret='8M9ujfv1U102rDfFjxNoLuOsszaIz8iCVK4UhhkJ')
+rsconnect::setAccountInfo(name='###InsertYours###',
+                          token='###InsertYours###',
+                          secret='###InsertYours###')
 
 
 
