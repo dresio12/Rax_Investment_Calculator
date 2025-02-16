@@ -117,7 +117,7 @@ ui <- fluidPage(
                numericInput("card_cost", "Initial Card Cost:", value = 150, min = 150),
                selectInput("card_rarity", "Target Card Rarity:", 
                            choices = constants$rarity_levels),
-               selectInput("pack_type", "Pack Type:", 
+               selectInput("pack_type", "Pack Type To Buy:", 
                            choices = names(constants$pack_details)),
                numericInput("avg_rating", "Average Play Rating:", value = 3.5, min = 0, step = 0.1),
                radioButtons("combine_rax", "Combine Player and Team Rax Profits",
@@ -147,7 +147,7 @@ ui <- fluidPage(
                               value = 0, min = 0, step = 0.1),
                  
                  # Card Cost (dynamic based on Card Type)
-                 numericInput("card_cost2", "Initial Card Cost:", value = 150, min = 150),
+                 numericInput("card_cost2", "Initial Card Cost:", value = 200, min = 150),
                  
                  # Number of Play Cards 
                  numericInput("play_card_num", "Number of Play Cards:",
@@ -159,10 +159,11 @@ ui <- fluidPage(
                  
                  # Target Card Rarity selection
                  selectInput("ptarget_card_rarity", "Target Card Rarity:", 
-                             choices = constants$rarity_levels),
+                             choices =constants$rarity_levels),
+                 
                  
                  # Pack Type selection
-                 selectInput("pack_type2", "Pack Type:", 
+                 selectInput("pack_type2", "Pack Type To Buy:", 
                              choices = names(constants$pack_details)),
                  
                  # Average Play Rating
@@ -188,7 +189,7 @@ ui <- fluidPage(
                                 value = 0, min = 0, step = 0.1),
                    
                    # Card Cost (dynamic based on Card Type)
-                   numericInput("card_cost3", "Initial Card Cost:", value = 150, min = 150),
+                   numericInput("card_cost3", "Initial Card Cost:", value = 800, min = 150),
                    
                    # Number of Play Cards 
                    numericInput("play_card_num2", "Number of Play Cards:",
@@ -203,7 +204,7 @@ ui <- fluidPage(
                                choices = constants$rarity_levels),
                    
                    # Pack Type selection
-                   selectInput("pack_type3", "Pack Type:", 
+                   selectInput("pack_type3", "Pack Type To Buy:", 
                                choices = names(constants$pack_details)),
                    
                    # Average Play Rating
@@ -221,6 +222,16 @@ ui <- fluidPage(
                    numericInput("team_card_rating2", "Current Card Rating Over Rarity:",
                                 value = 0, min = 0, step = 0.1),
                    
+                   # Card Cost (dynamic based on Card Type)
+                   numericInput("card_cost4", "Initial Card Cost:", value = 800, min = 150),
+                   
+                   # Input for Number of Player Cards
+                   numericInput("num_player_cards", "Number of Player Cards:", 
+                                value = 1, min = 1),
+                   
+                   # Dynamically generate rating input boxes for player cards
+                   uiOutput("rating_values_section"),
+                   
                    # Pack Type selection
                    selectInput("pack_type_bought3", "Most Common Bought Pack:", 
                                choices = names(constants$pack_details)),
@@ -229,15 +240,8 @@ ui <- fluidPage(
                    selectInput("ttarget_card_rarity2", "Target Card Rarity:", 
                                choices = constants$rarity_levels),
                    
-                   # Input for Number of Player Cards
-                   numericInput("num_player_cards", "Number of Player Cards:", 
-                                value = 1, min = 1),
-                   
-                   # Dynamically generate rating input boxes for player cards
-                   uiOutput("rating_values_section"),  
-                   
                    # Pack Type selection
-                   selectInput("pack_type4", "Pack Type:", 
+                   selectInput("pack_type4", "Pack Type To Buy:", 
                                choices = names(constants$pack_details)),
                    
                    # Average Play Rating
@@ -255,21 +259,37 @@ ui <- fluidPage(
            tags$div(
              style = "margin-top: 20px;",
              h3("Investment Summary"),
-             div(style = "font-size: 20px; color: white;", textOutput("expected_profit")),
-             conditionalPanel(
-               condition = "input.calc_tabs == 'tab2'",
-               div(style = "font-size: 20px; color: white;", textOutput("upgrade_investment"))),
-             div(style = "font-size: 20px; color: white;", textOutput("total_investment")),
-             div(style = "font-size: 20px; color: white;", textOutput("total_play_ratings")),
-             div(style = "font-size: 20px; color: white;", textOutput("total_packs_needed")),
+             
+             # Shared outputs between both tabs
+             div(style = "font-size: 20px; color: white;", 
+                 textOutput("expected_profit")),
+             div(style = "font-size: 20px; color: white;", 
+                 textOutput("total_investment")),
+             
+             # Tab 1 specific outputs
              conditionalPanel(
                condition = "input.calc_tabs == 'tab1'",
-             div(style = "font-size: 20px; color: white;", textOutput("total_play_rating_value"))),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("total_ratings")),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("total_play_rating_value")),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("total_rating_value_needed")),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("total_packs"))
+             ),
+             
+             # Tab 2 specific outputs
              conditionalPanel(
                condition = "input.calc_tabs == 'tab2'",
-               div(style = "font-size: 20px; color: white;", textOutput("new_rating"))),
-             div(style = "font-size: 20px; color: white;", textOutput("total_rating_value_needed"))
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("upgrade_investment")),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("new_rating")),
+               div(style = "font-size: 20px; color: white;", 
+                   textOutput("new_packs_bought"))
            )
+        )
     ),
     
     # Main Panel Column (Column 7)
@@ -282,11 +302,7 @@ ui <- fluidPage(
              )
            ),
            
-           # Conditional Panel for Tab 1 content
-           conditionalPanel(
-             condition = "input.calc_tabs == 'tab1'",  # Show only when 'tab1' is active
-             
-             # Display the Summary Table
+         # Display the Summary Table
              fluidRow(
                column(9,
                       div(style = "text-align: center; width: 90%;",
@@ -294,18 +310,10 @@ ui <- fluidPage(
                       )
                ),
                tableOutput("summary_table"),
-               # Display card rarity image
                div(style = "text-align: center;",
                    imageOutput("card_image", width = "90%", height = "auto")
                )
              )
-           ),
-           
-           # Conditional Panel for Tab 2 content
-           conditionalPanel(
-             condition = "input.calc_tabs == 'tab2'",  # Show only when 'tab2' is active
-             # Tab 2 content (display inputs, calculations, etc.)
-           )
     )
   )
 )
@@ -321,7 +329,16 @@ server <- function(input, output, session) {
       
       packs_needed <- ceiling(target_play_ratings / (input$avg_rating * pack_info$cards))
       total_play_rating_value <- packs_needed * pack_info$cards * input$avg_rating
+      
+      if (input$combine_rax == "No") {
       total_investment <- input$card_cost + (packs_needed * pack_info$cost)
+      } else {
+        if (input$card_type == "Player") {
+          total_investment <- input$card_cost + (packs_needed * pack_info$cost) + input$other_card_rax
+        } else {
+          total_investment <- input$card_cost + (packs_needed * pack_info$cost) + input$other_card_rax
+        }
+      }
       
       # Combined profit of player and team if option chosen
       expected_profit <- if (input$combine_rax == "No") {
@@ -334,7 +351,7 @@ server <- function(input, output, session) {
         
         # Special case for Common Player card, no opposite Rax calculation
         if (input$card_type == "Player" && (input$card_rarity == "Common" | input$card_rarity == "General")) {
-          expected_profit <- target_rax - total_investment - ifelse(input$combine_rax == "Yes", input$other_card_rax, 0)
+          expected_profit <- target_rax - total_investment
         } else {
           # Determine the opposite card type's Rax (other_rax)
           if (input$card_type == "Player") {
@@ -366,7 +383,7 @@ server <- function(input, output, session) {
           other_rax <- other_rax_value
           
           # Calculate expected profit
-          expected_profit <- target_rax + other_rax - total_investment - ifelse(input$combine_rax == "Yes", input$other_card_rax, 0)
+          expected_profit <- target_rax + other_rax - total_investment
         }
       }
       
@@ -382,43 +399,126 @@ server <- function(input, output, session) {
   })
   
   tab2_calculations <- reactive({
-    if (input$calc_tabs == "tab2") {
+    if (input$calc_tabs == "tab2" & input$card_type2 == "Player") {
       
+      #assigning inputs to vectors
       pack_info <- constants$pack_details[[input$pack_type2]]
-      current_play_ratings <- play_ratings()[[input$player_card_rarity]] + input$player_card_rating
-      target_play_ratings <- play_ratings()[[input$ptarget_card_rarity]]
-      previous_packs_needed <- ceiling(input$play_card_num / pack_info$cards)
-      previous_cost <- previous_packs_needed * pack_info$cost
+      prev_pack <- input$pack_type_bought
+      prev_pack_info <- constants$pack_details[[prev_pack]]
+      current_rarity <- input$player_card_rarity
+      current_play_ratings <- play_ratings()[[current_rarity]] + input$player_card_rating
+      card_cost <- input$card_cost2
+      num_cards <- input$play_card_num
+      target_rarity <- input$ptarget_card_rarity
+      target_play_ratings <- play_ratings()[[target_rarity]]
+      pack_type <- input$pack_type2
+      avg_rating <- input$avg_rating2
+      
+      
+      #calculations
       target_rax <- max_otd_rax()[which(constants$rarity_levels == input$ptarget_card_rarity)]
       
-      packs_needed <- ceiling(target_play_ratings / (input$avg_rating2 * pack_info$cards))
-      total_play_rating_value <- packs_needed * pack_info$cards * input$avg_rating2
-      total_investment <- input$card_cost2 + (packs_needed * pack_info$cost) +
-        previous_cost
-      expected_profit <- target_rax - total_investment
-      upgrade_packs_needed <- (ceiling(target_play_ratings / (input$avg_rating2 * pack_info$cards))) - previous_packs_needed
-      upgrade_investment <- upgrade_packs_needed * pack_info$cost
+      current_card_avg <- current_play_ratings/num_cards 
+      prev_investment <- ifelse(num_cards == 0, 
+                                card_cost, 
+                                (max(1, ceiling(num_cards / prev_pack_info$cards)) * prev_pack_info$cost) + card_cost)
       
+      
+      play_rating_needed <- target_play_ratings - current_play_ratings  
+      packs_needed <- max(1, ceiling(play_rating_needed / (avg_rating * pack_info$cards)))
+      rating_added <- packs_needed * (avg_rating * pack_info$cards)
+      new_total_rating <- current_play_ratings + rating_added
+      
+      #new_rating
       rarities <- constants$rarity_levels  
-      target_index <- match(input$ptarget_card_rarity, rarities)
+      target_index <- match(target_rarity, rarities)
       next_rarity <- if (target_index < length(rarities)) rarities[target_index + 1] else NA
       
-      rating_mod <- if (!is.na(next_rarity)) {
-        play_ratings()[[next_rarity]] - play_ratings()[[input$ptarget_card_rarity]]
+      next_rating_cap <- if (!is.na(next_rarity)) {
+        play_ratings()[[next_rarity]] - target_play_ratings
       } else {
         "Iconic"  # Default to 0 if there's no next rarity
-      }
+      }  
       
+      
+      #output vectors
+      new_packs_bought <- packs_needed
+      upgrade_investment <- ifelse(current_rarity != target_rarity, packs_needed * pack_info$cost, 0)
+      total_investment <- upgrade_investment + prev_investment
+      expected_profit <- target_rax - total_investment
+      new_rating <- new_total_rating - target_play_ratings
+      
+      #outputs
       list(
-        total_investment = total_investment,
-        upgrade_investment = upgrade_investment,
-        total_ratings = pack_info$cards * packs_needed,
-        new_rating = total_play_rating_value - play_ratings()[[input$ptarget_card_rarity]],
-        total_rating_value_needed = target_play_ratings - current_play_ratings,
-        total_packs = upgrade_packs_needed,
         expected_profit = expected_profit,
-        rating_mod = rating_mod
+        upgrade_investment = upgrade_investment,
+        total_investment = total_investment,
+        new_rating = new_rating,
+        new_packs_bought = new_packs_bought,
+        next_rating_cap = next_rating_cap
       )
+    } else {
+      if (input$player_path == 'No') {
+        #assigning inputs to vectors
+        pack_info <- constants$pack_details[[input$pack_type3]]
+        prev_pack <- input$pack_type_bought2
+        prev_pack_info <- constants$pack_details[[prev_pack]]
+        current_rarity <- input$team_card_rarity
+        current_play_ratings <- play_ratings()[[current_rarity]] + input$team_card_rating
+        card_cost <- input$card_cost3
+        num_cards <- input$play_card_num2
+        target_rarity <- input$ttarget_card_rarity
+        target_play_ratings <- play_ratings()[[target_rarity]]
+        pack_type <- input$pack_type3
+        avg_rating <- input$avg_rating3
+        
+        
+        #calculations
+        target_rax <- max_otd_rax()[which(constants$rarity_levels == input$ttarget_card_rarity)]
+        
+        current_card_avg <- current_play_ratings/num_cards 
+        prev_investment <- ifelse(num_cards == 0, 
+                                  card_cost, 
+                                  (max(1, ceiling(num_cards / prev_pack_info$cards)) * prev_pack_info$cost) + card_cost)
+        
+        
+        play_rating_needed <- target_play_ratings - current_play_ratings  
+        packs_needed <- max(1, ceiling(play_rating_needed / (avg_rating * pack_info$cards)))
+        rating_added <- packs_needed * (avg_rating * pack_info$cards)
+        new_total_rating <- current_play_ratings + rating_added
+        
+        #new_rating
+        rarities <- constants$rarity_levels  
+        target_index <- match(target_rarity, rarities)
+        next_rarity <- if (target_index < length(rarities)) rarities[target_index + 1] else NA
+        
+        next_rating_cap <- if (!is.na(next_rarity)) {
+          play_ratings()[[next_rarity]] - target_play_ratings
+        } else {
+          "Iconic"  # Default to 0 if there's no next rarity
+        }  
+        
+        
+        #output vectors
+        new_packs_bought <- packs_needed
+        upgrade_investment <- ifelse(current_rarity != target_rarity, packs_needed * pack_info$cost, 0)
+        total_investment <- upgrade_investment + prev_investment
+        expected_profit <- target_rax - total_investment
+        new_rating <- new_total_rating - target_play_ratings
+        
+        #outputs
+        list(
+          expected_profit = expected_profit,
+          upgrade_investment = upgrade_investment,
+          total_investment = total_investment,
+          new_rating = new_rating,
+          new_packs_bought = new_packs_bought,
+          next_rating_cap = next_rating_cap
+        )
+      }  
+      else {
+        return(NULL)
+      }
     }
   })
   
@@ -451,6 +551,14 @@ server <- function(input, output, session) {
                        value = round(input$avg_rating, 1))
   })
   
+  observe({
+    next_rating_cap <- tab2_calculations()$next_rating_cap 
+    req(next_rating_cap)
+    updateNumericInput(session, "player_card_rating",
+                       max = next_rating_cap)  # Set max value dynamically
+  })
+  
+  
   # Define play rating requirements for each rarity
   play_ratings <- reactive({
     if (input$card_type == "Player") {
@@ -479,9 +587,23 @@ server <- function(input, output, session) {
   
   # Image path based on rarity
   card_image_path <- reactive({
-    rarity <- input$card_rarity
+    # Determine rarity based on selected tab
+    rarity <- if (input$calc_tabs == "tab1") {
+      input$card_rarity
+    } else {
+      # Tab 2: Determine rarity based on card_type2 and player_path
+      if (input$card_type2 == "Player") {
+        rarity <- input$ptarget_card_rarity
+      } else if (input$card_type2 == "Team" && input$player_path == "Yes") {
+        rarity <- input$ttarget_card_rarity2
+      } else if (input$card_type2 == "Team") {
+        rarity <- input$ttarget_card_rarity
+      } else {
+        rarity <- "General"  # Default fallback if no condition is met
+      }
+    }
     paths <- list(
-      General = "C:/Users/dresi/Pictures/Screenshots/Screenshot 2025-02-13 002710.png",
+      General = "C:/Users/dresi/Pictures/Screenshots/Screenshot 2025-02-13 163708.png",
       Common = "C:/Users/dresi/Pictures/Screenshots/Screenshot 2024-12-29 132641.png",
       Uncommon = "C:/Users/dresi/Pictures/Screenshots/Screenshot 2024-12-29 133805.png",
       Rare = "C:/Users/dresi/Pictures/Screenshots/Screenshot 2024-12-29 132944.png",
@@ -493,10 +615,26 @@ server <- function(input, output, session) {
     paths[[rarity]]
   })
   
-  # Summary Table (Only show on Tab 1)
+  # Summary Table
   output$table_title <- renderText({
-    if (input$calc_tabs == "tab1") {  # Ensure it only renders on Tab 1
-      if (input$card_type == "Player") {
+    if (input$calc_tabs == "tab1") {
+      if (input$combine_rax == 'No') {
+        if (input$card_type == "Player") {
+        return("Player OTD Rax Margins")
+      } else {
+        return("Team OTD Rax Margins")
+        }
+      }
+      else {
+        if (input$card_type == "Player") {
+          return("Player + Team OTD Rax Margins")
+        } else {
+          return("Team + Player OTD Rax Margins")
+        }
+      }
+        
+    } else {
+      if (input$card_type2 == "Player") {
         return("Player OTD Rax Margins")
       } else {
         return("Team OTD Rax Margins")
@@ -504,90 +642,117 @@ server <- function(input, output, session) {
     }
   })
   
-  # Generate the summary table (Only show on Tab 1)
+  # Generate the summary table
   output$summary_table <- renderUI({
-    if (input$calc_tabs == "tab1") {  # Ensure it only renders on Tab 1
-      # Determine max OTD Rax based on card type
-      max_rax <- max_otd_rax()
-      
-      # Define rarity colors
-      rarity_colors <- c(
-        "General" = "grey", "Common" = "blue", "Uncommon" = "green", "Rare" = "orange",
-        "Epic" = "red", "Legendary" = "purple", "Mystic" = "gold",
-        "Iconic" = "pink"
-      )
-      
-      # Create the table data
-      table_data <- data.frame(
-        Card_Rarity = c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic"),
-        Maximum_OTD_Rax = max_rax,
-        Rax_Investment = sapply(c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic"), function(rarity) {
-          # For each rarity, calculate Rax Investment based on input selections
-          target_play_ratings <- play_ratings()[[rarity]]
-          total_cards <- pack_details[[input$pack_type]]$cards
-          total_cost <- pack_details[[input$pack_type]]$cost
-          
-          # Calculate the number of packs needed for each rarity
-          packs_needed <- ceiling(target_play_ratings / (input$avg_rating * total_cards))
-          
-          # Calculate Rax Investment (including initial card cost)
-          rax_investment <- input$card_cost + (packs_needed * total_cost)
-          return(rax_investment)
-        }),
-        Maximum_OTD_Profit = sapply(c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic"), function(rarity) {
-          target_play_ratings <- play_ratings()[[rarity]]
-          total_cards <- pack_details[[input$pack_type]]$cards
-          total_cost <- pack_details[[input$pack_type]]$cost
-          
-          # Calculate the number of packs needed for the rarity
-          packs_needed <- ceiling(target_play_ratings / (input$avg_rating * total_cards))
-          
-          # Calculate the total Rax Investment
-          total_investment <- input$card_cost + (packs_needed * total_cost)
-          
-          # Calculate Minimum Profit
-          max_rax[which(c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic") == rarity)] - total_investment
+    # Get the active tab's inputs
+    card_type <- if (input$calc_tabs == "tab1") input$card_type else input$card_type2 
+    
+    suffix <- if (input$card_type2 == "Player") "2" else "3"
+    
+    pack_type <- if (input$calc_tabs == "tab1") input$pack_type else input[[paste0("pack_type", suffix)]]
+    card_cost <- if (input$calc_tabs == "tab1") input$card_cost else input[[paste0("card_cost", suffix)]]
+    avg_rating <- if (input$calc_tabs == "tab1") input$avg_rating else input[[paste0("avg_rating", suffix)]]
+    
+    # Determine max OTD Rax based on card type
+    max_rax <- if (input$calc_tabs == "tab1" && input$combine_rax == "Yes") {
+      if (card_type == "Player") {
+        # Combined Player + Team Rax values
+        c(0, 0, 2500, 4500, 8000, 14000, 28000, Inf)
+      } else {
+        # Combined Team + Player Rax values
+        c(0, 2500, 3500, 6000, 10000, 20000, 40000, Inf)
+      }
+    } else {
+      if (card_type == "Player") {
+        # Standard Player Rax values
+        c(0, 500, 1000, 2000, 4000, 8000, 16000, Inf)
+      } else {
+        # Standard Team Rax values
+        c(0, 1500, 2500, 4000, 6000, 12000, 24000, Inf)
+      }
+    }
+    
+    # Get appropriate play ratings based on card type
+    current_play_ratings <- if (card_type == "Player") {
+      player_play_ratings()
+    } else {
+      team_play_ratings()
+    }
+    
+    # Define rarity colors
+    rarity_colors <- c(
+      "General" = "grey", "Common" = "blue", "Uncommon" = "green", "Rare" = "orange",
+      "Epic" = "red", "Legendary" = "purple", "Mystic" = "gold",
+      "Iconic" = "pink"
+    )
+    
+    # Create the table data
+    table_data <- data.frame(
+      Card_Rarity = c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic"),
+      Maximum_OTD_Rax = max_rax,
+      Rax_Investment = sapply(c("General", "Common", "Uncommon", "Rare", "Epic", "Legendary", "Mystic", "Iconic"), function(rarity) {
+        # For each rarity, calculate Rax Investment based on input selections
+        target_play_ratings <- current_play_ratings[[rarity]]
+        total_cards <- pack_details[[pack_type]]$cards
+        total_cost <- pack_details[[pack_type]]$cost
+        
+        # Calculate the number of packs needed for each rarity
+        packs_needed <- ceiling(target_play_ratings / (avg_rating * total_cards))
+        
+        # Calculate Rax Investment (including initial card cost)
+        rax_investment <- 
+          if (input$calc_tabs == "tab1" && input$combine_rax == "Yes")  {
+            if (card_type == "Player") {
+              card_cost + (packs_needed * total_cost) + input$other_card_rax
+            } else{
+              card_cost + (packs_needed * total_cost) + input$other_card_rax
+            }
+          }
+          else {card_cost + (packs_needed * total_cost) }
+        return(rax_investment)
+      })
+    )
+    
+    # Add Maximum_OTD_Profit column by subtracting Rax_Investment from Maximum_OTD_Rax
+    table_data$Maximum_OTD_Profit <- table_data$Maximum_OTD_Rax - table_data$Rax_Investment
+    
+    # Generate the HTML table with colored text
+    table_html <- tags$table(
+      style = "width: 75%; text-align: center; border-collapse: collapse;",
+      tags$thead(
+        tags$tr(
+          tags$th("Card Rarity", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Maximum OTD Rax", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Rax Investment", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
+          tags$th("Maximum OTD Profit", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;")
+        )
+      ),
+      tags$tbody(
+        lapply(1:nrow(table_data), function(i) {
+          tags$tr(
+            tags$td(
+              table_data$Card_Rarity[i],
+              style = paste("color:", rarity_colors[table_data$Card_Rarity[i]], "; padding: 5px;")
+            ),
+            tags$td(
+              formatC(table_data$Maximum_OTD_Rax[i], format = "f", big.mark = ",", digits = 0),
+              style = "padding: 5px;"
+            ),
+            tags$td(
+              formatC(table_data$Rax_Investment[i], format = "f", big.mark = ",", digits = 0),
+              style = "padding: 5px;"
+            ),
+            tags$td(
+              formatC(table_data$Maximum_OTD_Profit[i], format = "f", big.mark = ",", digits = 0),
+              style = "padding: 5px;"
+            )
+          )
         })
       )
-      
-      # Generate the HTML table with colored text
-      table_html <- tags$table(
-        style = "width: 75%; text-align: center; border-collapse: collapse;",
-        tags$thead(
-          tags$tr(
-            tags$th("Card Rarity", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
-            tags$th("Maximum OTD Rax", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
-            tags$th("Rax Investment", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;"),
-            tags$th("Maximum OTD Profit", style = "text-align: center; border-bottom: 2px solid white; padding: 5px;")
-          )
-        ),
-        tags$tbody(
-          lapply(1:nrow(table_data), function(i) {
-            tags$tr(
-              tags$td(
-                table_data$Card_Rarity[i],
-                style = paste("color:", rarity_colors[table_data$Card_Rarity[i]], "; padding: 5px;")
-              ),
-              tags$td(
-                formatC(table_data$Maximum_OTD_Rax[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
-                style = "padding: 5px;"
-              ),
-              tags$td(
-                formatC(table_data$Rax_Investment[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
-                style = "padding: 5px;"
-              ),
-              tags$td(
-                formatC(table_data$Maximum_OTD_Profit[i], format = "f", big.mark = ",", digits = 0), # 0 decimals
-                style = "padding: 5px;"
-              )
-            )
-          })
-        )
-      )
-      
-      # Return the styled HTML table
-      table_html
-    }
+    )
+    
+    # Return the styled HTML table
+    table_html
   })
   
   # Dynamic reactive expressions to switch between tab calculations
@@ -597,49 +762,53 @@ server <- function(input, output, session) {
     } else if (input$calc_tabs == "tab2") {
       tab2_calculations()
     } else {
-      NULL  # Handle edge cases
+      NULL
     }
   })
   
-  # Use the reactive investment_summary() for outputs
+  # Shared outputs
   output$expected_profit <- renderText({
-    req(investment_summary())  # Ensure it's not NULL
-    paste("Expected Profit:", investment_summary()$expected_profit, "rax")
+    paste("Expected Profit:", format(investment_summary()$expected_profit, big.mark=","))
   })
   
   output$total_investment <- renderText({
-    req(investment_summary())
-    paste("Total Rax Investment:", investment_summary()$total_investment, "rax")
+    paste("Total Investment:", format(investment_summary()$total_investment, big.mark=","))
   })
   
-  output$total_play_ratings <- renderText({
-    req(investment_summary())
-    paste("Total Play Rating Cards:", investment_summary()$total_ratings)
-  })
-  
-  output$total_packs_needed <- renderText({
-    req(investment_summary())
-    paste("Total Packs Required:", investment_summary()$total_packs)
+  # Tab 1 specific outputs
+  output$total_ratings <- renderText({
+    paste("Total Ratings:", format(calculations()$total_ratings, big.mark=","))
   })
   
   output$total_play_rating_value <- renderText({
-    req(investment_summary())
-    paste("Total Play Rating Value:", investment_summary()$total_play_rating_value)
+    paste("Total Play Rating Value:", format(calculations()$total_play_rating_value, big.mark=","))
   })
   
   output$total_rating_value_needed <- renderText({
-    req(investment_summary())
-    paste("Total Play Rating Value Needed:", investment_summary()$total_rating_value_needed)
+    paste("Total Rating Value Needed:", format(calculations()$total_rating_value_needed, big.mark=","))
   })
   
+  output$total_packs <- renderText({
+    paste("Total Packs:", format(calculations()$total_packs, big.mark=","))
+  })
+  
+  # Tab 2 specific outputs
   output$upgrade_investment <- renderText({
-    req(investment_summary())
-    paste("Upgrade Investment:", investment_summary()$upgrade_investment)
+    paste("Upgrade Investment:", format(tab2_calculations()$upgrade_investment, big.mark=","))
   })
   
   output$new_rating <- renderText({
-    req(investment_summary())
-    paste("New Rating:", investment_summary()$new_rating, "/", investment_summary()$rating_mod)
+    req(tab2_calculations()$new_rating, tab2_calculations()$next_rating_cap)  # Ensure both exist
+    
+    new_rating_formatted <- format(tab2_calculations()$new_rating, big.mark = ",")
+    next_rating_cap_formatted <- format(tab2_calculations()$next_rating_cap, big.mark = ",")
+    
+    paste("New Rating:", new_rating_formatted, "/", next_rating_cap_formatted)
+  })
+  
+  
+  output$new_packs_bought <- renderText({
+    paste("New Packs Needed:", format(tab2_calculations()$new_packs_bought, big.mark=","))
   })
   
   # Render the image
@@ -649,13 +818,14 @@ server <- function(input, output, session) {
          alt = "Card Rarity Image")
   }, deleteFile = FALSE)
   
+  
   #Calculator 2
   # Dynamically generate the rating value input boxes based on the number of player cards
   output$rating_values_section <- renderUI({
     num_cards <- input$num_player_cards
     lapply(1:num_cards, function(i) {
       numericInput(paste0("rating_value_", i), 
-                   paste("Card", i, "Rating Value:"), 
+                   paste("Player Card", i, "Rating Value:"), 
                    value = 0, min = 0, step = 0.1)
     })
   })
